@@ -15,7 +15,7 @@ namespace Hueliday.Tests
 	public class BridgeTest
 	{
 		//TODO move to config file
-		private string _Ip = "192.168.2.12";
+		private string _Ip = Config.Ip;
 
 		private string _Name = "BridgeTest-CreateSchdule";
 		private string _Description = "Test for Bridge";
