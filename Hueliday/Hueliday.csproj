@@ -80,6 +80,7 @@
     <Compile Include="Models\Command.cs" />
     <Compile Include="Models\Body.cs" />
     <Compile Include="Models\Helpers\LowecaseContractResolver.cs" />
+    <Compile Include="Models\Helpers\WebApi.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Web.config" />

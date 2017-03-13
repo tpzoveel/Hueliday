@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -11,50 +12,59 @@ namespace Hueliday
 {
 	public class Bridge
 	{
-		public string IpAddress
-		{
-			get;
-			set;
-		}
+		public string IpAddress { get; set; }
 
 		//TODO move these to a config file
 		private string _baseUrl = "/api/newdeveloper";
 		private string _namePrefix = "__HH";
 
-		public Bridge(string Ip)
+		public Bridge(string ip)
 		{
-			IpAddress = Ip;
+			IpAddress = ip;
 		}
 
+		// Return the name of the Hue Bridge
+		// String.Empty on failure
 		public string GetName()
 		{
-			string Uri = MakeUri("/config"), key = "name";
+			string Uri = MakeUri("/config"),
+			key = "name";
 			JObject configAttributes = GetObjectsFromWebApi(Uri);
+			if (configAttributes == null)
+				return String.Empty;
 			return (string)configAttributes[key];
 		}
 
+		// Get the schedules from the Hue Bridge, keyed by their ID
+		// or null on failure
 		public Dictionary<string, Schedule> GetSchedules()
 		{
 			string jsonString;
-			Dictionary<string, Schedule> Schedules = new Dictionary<string, Schedule>();
 			string Uri = MakeUri("/schedules");
-			jsonString = GetJsonFromWebApi(Uri);
-			Schedules = JsonConvert.DeserializeObject<Dictionary<string, Schedule>>(jsonString);
-			return Schedules;
+			jsonString = WebApi.Get(Uri);
+			if (String.IsNullOrEmpty(jsonString))
+				return null;
+
+			return JsonConvert.DeserializeObject<Dictionary<string, Schedule>>(jsonString);
 		}
 
+		// Add a new Schedule to Hue Bridge
+		// Return the message from the bridge, or null if something is wrong
 		public string NewSchedule(Schedule newSchedule)
 		{
-			string result = "", jsonString, Uri = MakeUri("/schedules");
+			string jsonString, Uri = MakeUri("/schedules");
 			var settings = new JsonSerializerSettings();
 			settings.ContractResolver = new LowercaseContractResolver();
 			jsonString = JsonConvert.SerializeObject(newSchedule, Formatting.Indented, settings);
 
-			result = PostJsonToWebApi(Uri, jsonString);
+			if (String.IsNullOrEmpty(jsonString))
+				return string.Empty;
 
-			return result;
+			return WebApi.Post(Uri, jsonString);
 		}
 
+		// Update the schedule on the Hue Bridge, identified by id
+		// Return the message from the bridge, or null if something is wrong
 		public string UpdateSchedule(string id, Schedule updatedSchedule)
 		{
 			string result = "", jsonString, Uri = MakeUri($"/schedules/{id}");
@@ -62,61 +72,21 @@ namespace Hueliday
 			settings.ContractResolver = new LowercaseContractResolver();
 			jsonString = JsonConvert.SerializeObject(updatedSchedule, Formatting.Indented, settings);
 
-			result = PutJsonToWebApi(Uri, jsonString);
+			result = WebApi.Put(Uri, jsonString);
 
 			return result;
 		}
 
+		// Remove the schedule from the Hue Bridge, identified by id
+		// Return the message from the bridge
 		public string RemoveSchedule(string id)
 		{
-			string result = "", Uri = MakeUri($"/schedules/{id}");
-
-			result = DeleteJsonToWebApi(Uri, "");
-
-			return result;
+			string Uri = MakeUri($"/schedules/{id}");
+			return WebApi.Delete(Uri, "");
 		}
 
-		private string DeleteJsonToWebApi(string uri, string data)
-		{
-			string result;
-			using (var client = new WebClient())
-			{
-				result = client.UploadString(uri, "DELETE", data);
-			}
-			return result;
-		}
-
-		private string PutJsonToWebApi(string uri, string data)
-		{
-			string result;
-			using (var client = new WebClient())
-			{
-				result = client.UploadString(uri, "PUT", data);
-			}
-			return result;
-		}
-
-		private string PostJsonToWebApi(string uri, string data)
-		{
-			string result;
-			using (var client = new WebClient())
-			{
-				result = client.UploadString(uri, data);
-			}
-			return result;
-		}
-
-		private string GetJsonFromWebApi(string Uri)
-		{
-			string jsonString;
-			using (var client = new WebClient())
-			{
-				jsonString = client.DownloadString(Uri);
-			}
-			return jsonString;
-		}
-
-		private JObject GetObjectsFromWebApi(string Uri) => JObject.Parse(GetJsonFromWebApi(Uri));
+		// Get some info from the Hue Bridge and return as parsed JObject
+		private JObject GetObjectsFromWebApi(string uri) => JObject.Parse(WebApi.Get(uri));
 
 		private string MakeUri(string resource) => "http://" + IpAddress + _baseUrl + resource;
 	}
