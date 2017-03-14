@@ -1,11 +1,11 @@
 ﻿using System;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Hueliday
 {
 	public class Schedule
 	{
-		//[JsonProperty("id")]
 		public string Name { get; set; }
 		public string Description { get; set; }
 		public Command Command { get; set; }
@@ -18,6 +18,47 @@ namespace Hueliday
 		[JsonIgnore]
 		public bool Recycle { get; set; }
 
+        public (DateTime time, TimeSpan random, List<DayOfWeek> days) GetLocalTime()
+        {
+            string timeString, randomString; //"W127/T06:55:00A00:30:00" 
+            int daysMask;
+            var days = new List<DayOfWeek>();
+
+            var restString = LocalTime;
+            string timePart = null;
+            string randomPart = null;
+            var separatorIndex = LocalTime.IndexOf('/');
+            if (separatorIndex > -1) // slash separates weekdays from time
+            {
+                var strings = LocalTime.Split('/');
+                var daysString = strings[0].TrimStart(new char['W']);
+                restString = strings[1];
+                if (int.TryParse(daysString, out daysMask))
+                {
+                    if ((daysMask & 64) == 64) days.Add(DayOfWeek.Monday);
+                    if ((daysMask & 32) == 32) days.Add(DayOfWeek.Tuesday);
+                    if ((daysMask & 16) == 16) days.Add(DayOfWeek.Wednesday);
+                    if ((daysMask & 8) == 8) days.Add(DayOfWeek.Thursday);
+                    if ((daysMask & 4) == 4) days.Add(DayOfWeek.Friday);
+                    if ((daysMask & 2) == 2) days.Add(DayOfWeek.Saturday);
+                    if ((daysMask & 1) == 1) days.Add(DayOfWeek.Sunday);
+                }
+            }
+
+            // now parse the second part which is the time of day, appended with optional randomize time
+            restString = restString.TrimStart(new char['T']);
+            separatorIndex = restString.IndexOf('A');
+            if (separatorIndex > -1)
+            {
+                var strings = restString.Split('A');
+                timePart = strings[0];
+                randomPart = strings[1];
+            }
+            else
+                timePart = restString;
+
+            return (DateTime.Parse(timePart), TimeSpan.Parse(randomPart), days);
+        }
 	}
 }
 
