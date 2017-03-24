@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="Controllers\HomeControllerTest.cs" />
     <Compile Include="Models\BridgeTest.cs" />
+    <Compile Include="Models\HolidayScheduleTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

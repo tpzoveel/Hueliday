@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Hueliday
 {
@@ -14,7 +15,8 @@ namespace Hueliday
 		public string Time { get; set; } //deprecated
 		[JsonIgnore]
 		public string Created { get; set; }
-		public string Status { get; set; }
+		[JsonConverter(typeof(StringEnumConverter))]
+		public ScheduleStatus Status { get; set; }
 		[JsonIgnore]
 		public bool Recycle { get; set; }
 

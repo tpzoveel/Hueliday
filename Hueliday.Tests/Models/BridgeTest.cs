@@ -20,7 +20,7 @@ namespace Hueliday.Tests
 		private string _Name = "BridgeTest-CreateSchdule";
 		private string _Description = "Test for Bridge";
 		private string _LocalTime = "2017-06-23T19:52:00";
-		private string _Status = "enabled";
+		private ScheduleStatus _Status = ScheduleStatus.enabled;
 		private bool _Recycle = false;
 		private string _Address = "/api/C9gvVbyDlfkHfK82/groups/0/action";
 		private object _Body = new { Scene = "de5ee82e9-on-0" };

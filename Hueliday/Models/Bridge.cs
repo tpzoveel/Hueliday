@@ -14,10 +14,6 @@ namespace Hueliday
 	{
 		public string IpAddress { get; set; }
 
-		//TODO move these to a config file
-		private string _baseUrl = "/api/newdeveloper";
-		private string _namePrefix = "__HH";
-
 		public Bridge(string ip)
 		{
 			IpAddress = ip;
@@ -88,7 +84,7 @@ namespace Hueliday
 		// Get some info from the Hue Bridge and return as parsed JObject
 		private JObject GetObjectsFromWebApi(string uri) => JObject.Parse(WebApi.Get(uri));
 
-		private string MakeUri(string resource) => "http://" + IpAddress + _baseUrl + resource;
+		private string MakeUri(string resource) => "http://" + IpAddress + Config.BaseUrl + resource;
 	}
 }
 

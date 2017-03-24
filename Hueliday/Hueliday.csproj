@@ -82,6 +82,8 @@
     <Compile Include="Models\Helpers\LowecaseContractResolver.cs" />
     <Compile Include="Models\Helpers\WebApi.cs" />
     <Compile Include="Models\Helpers\Config.cs" />
+    <Compile Include="Models\HolidaySchedule.cs" />
+    <Compile Include="Models\Helpers\ScheduleStatus.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Web.config" />
