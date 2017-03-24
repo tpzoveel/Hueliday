@@ -1,66 +1,124 @@
-using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Text;
+using System.Web.Script.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Hueliday
 {
-	public class Schedule
+	public class Bridge
 	{
-		public string Name { get; set; }
-		public string Description { get; set; }
-		public Command Command { get; set; }
-		public string LocalTime { get; set; }
-		[JsonIgnore]
-		public string Time { get; set; } //deprecated
-		[JsonIgnore]
-		public string Created { get; set; }
-		[JsonConverter(typeof(StringEnumConverter))]
-		public ScheduleStatus Status { get; set; }
-		[JsonIgnore]
-		public bool Recycle { get; set; }
+		public string IpAddress
+		{
+			get;
+			set;
+		}
 
-        public (DateTime time, TimeSpan random, List<DayOfWeek> days) GetLocalTime()
-        {
-            string timeString, randomString; //"W127/T06:55:00A00:30:00" 
-            int daysMask;
-            var days = new List<DayOfWeek>();
+		//TODO move these to a config file
+		private string _baseUrl = "/api/newdeveloper";
+		private string _namePrefix = "__HH";
 
-            var restString = LocalTime;
-            string timePart = null;
-            string randomPart = null;
-            var separatorIndex = LocalTime.IndexOf('/');
-            if (separatorIndex > -1) // slash separates weekdays from time
-            {
-                var strings = LocalTime.Split('/');
-                var daysString = strings[0].TrimStart(new char['W']);
-                restString = strings[1];
-                if (int.TryParse(daysString, out daysMask))
-                {
-                    if ((daysMask & 64) == 64) days.Add(DayOfWeek.Monday);
-                    if ((daysMask & 32) == 32) days.Add(DayOfWeek.Tuesday);
-                    if ((daysMask & 16) == 16) days.Add(DayOfWeek.Wednesday);
-                    if ((daysMask & 8) == 8) days.Add(DayOfWeek.Thursday);
-                    if ((daysMask & 4) == 4) days.Add(DayOfWeek.Friday);
-                    if ((daysMask & 2) == 2) days.Add(DayOfWeek.Saturday);
-                    if ((daysMask & 1) == 1) days.Add(DayOfWeek.Sunday);
-                }
-            }
+		public Bridge(string Ip)
+		{
+			IpAddress = Ip;
+		}
 
-            // now parse the second part which is the time of day, appended with optional randomize time
-            restString = restString.TrimStart(new char['T']);
-            separatorIndex = restString.IndexOf('A');
-            if (separatorIndex > -1)
-            {
-                var strings = restString.Split('A');
-                timePart = strings[0];
-                randomPart = strings[1];
-            }
-            else
-                timePart = restString;
+		public string GetName()
+		{
+			string Uri = MakeUri("/config"), key = "name";
+			JObject configAttributes = GetObjectsFromWebApi(Uri);
+			return (string)configAttributes[key];
+		}
 
-            return (DateTime.Parse(timePart), TimeSpan.Parse(randomPart), days);
-        }
+		public Dictionary<string, Schedule> GetSchedules()
+		{
+			string jsonString;
+			Dictionary<string, Schedule> Schedules = new Dictionary<string, Schedule>();
+			string Uri = MakeUri("/schedules");
+			jsonString = GetJsonFromWebApi(Uri);
+			Schedules = JsonConvert.DeserializeObject<Dictionary<string, Schedule>>(jsonString);
+			return Schedules;
+		}
+
+		public string NewSchedule(Schedule newSchedule)
+		{
+			string result = "", jsonString, Uri = MakeUri("/schedules");
+			var settings = new JsonSerializerSettings();
+			settings.ContractResolver = new LowercaseContractResolver();
+			jsonString = JsonConvert.SerializeObject(newSchedule, Formatting.Indented, settings);
+
+			result = PostJsonToWebApi(Uri, jsonString);
+
+			return result;
+		}
+
+		public string UpdateSchedule(string id, Schedule updatedSchedule)
+		{
+			string result = "", jsonString, Uri = MakeUri($"/schedules/{id}");
+			var settings = new JsonSerializerSettings();
+			settings.ContractResolver = new LowercaseContractResolver();
+			jsonString = JsonConvert.SerializeObject(updatedSchedule, Formatting.Indented, settings);
+
+			result = PutJsonToWebApi(Uri, jsonString);
+
+			return result;
+		}
+
+		public string RemoveSchedule(string id)
+		{
+			string result = "", Uri = MakeUri($"/schedules/{id}");
+
+			result = DeleteJsonToWebApi(Uri, "");
+
+			return result;
+		}
+
+		private string DeleteJsonToWebApi(string uri, string data)
+		{
+			string result;
+			using (var client = new WebClient())
+			{
+				result = client.UploadString(uri, "DELETE", data);
+			}
+			return result;
+		}
+
+		private string PutJsonToWebApi(string uri, string data)
+		{
+			string result;
+			using (var client = new WebClient())
+			{
+				result = client.UploadString(uri, "PUT", data);
+			}
+			return result;
+		}
+
+		private string PostJsonToWebApi(string uri, string data)
+		{
+			string result;
+			using (var client = new WebClient())
+			{
+				result = client.UploadString(uri, data);
+			}
+			return result;
+		}
+
+		private string GetJsonFromWebApi(string Uri)
+		{
+			string jsonString;
+			using (var client = new WebClient())
+			{
+				jsonString = client.DownloadString(Uri);
+			}
+			return jsonString;
+		}
+
+		private JObject GetObjectsFromWebApi(string Uri) => JObject.Parse(GetJsonFromWebApi(Uri));
+
+		private string MakeUri(string resource) => "http://" + IpAddress + _baseUrl + resource;
 	}
 }
 

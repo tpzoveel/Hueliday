@@ -1,0 +1,8 @@
+version: '2.1'
+
+services:
+  hueliday:
+    image: hueliday
+    build:
+      context: .\Hueliday
+      dockerfile: Dockerfile
