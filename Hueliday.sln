@@ -6,8 +6,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hueliday", "Hueliday\Huelid
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hueliday.Tests", "Hueliday.Tests\Hueliday.Tests.csproj", "{0ADB2B3C-25EA-4CB8-8FC4-A98937C6848A}"
 EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{722D92BC-A9C0-4D7A-8819-1526B4CFA645}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
